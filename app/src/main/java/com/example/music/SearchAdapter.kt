@@ -7,6 +7,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import coil.transform.RoundedCornersTransformation
 
 class SearchAdapter(private val musicList: List<Track>, private val onItemClick: (Track) -> Unit) :
     RecyclerView.Adapter<SearchAdapter.ViewHolder>() {
@@ -25,6 +26,7 @@ class SearchAdapter(private val musicList: List<Track>, private val onItemClick:
         holder.title.text = track.name
         holder.image.load(track.image) {
             crossfade(true)
+            transformations(RoundedCornersTransformation(16f))
         }
 
         holder.itemView.setOnClickListener {

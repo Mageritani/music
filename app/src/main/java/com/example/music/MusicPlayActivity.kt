@@ -1,5 +1,6 @@
 package com.example.music
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -29,9 +30,12 @@ class MusicPlayActivity : AppCompatActivity() {
 
     private lateinit var songList : ArrayList<String>
     private var trackIndex = 0
+    private var trackNameList = ArrayList<String>()
+    private var trackImageList = ArrayList<String>()
 
     private  var media: CustomMediaPlayer? = null
     private val handler = Handler(Looper.getMainLooper())
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,9 +57,23 @@ class MusicPlayActivity : AppCompatActivity() {
         val trackImage = intent.getStringExtra("TRACK_IMAGE")
         val trackAudio = intent.getStringExtra("TRACK_AUDIO")
 
+        songList = intent.getStringArrayListExtra("TRACK_LIST") ?: arrayListOf()
+        trackIndex = intent.getIntExtra("TRACK_INDEX",0)
 
-        val songList = intent.getStringArrayListExtra("TRACK_LIST") ?: arrayListOf()
-        val trackIndex = intent.getIntExtra("TRACK_INDEX",0)
+      trackNameList = intent.getStringArrayListExtra("TRACK_NAMES") ?: arrayListOf()
+      trackImageList = intent.getStringArrayListExtra("TRACK_IMAGES") ?: arrayListOf()
+
+        if (trackName != null && trackImage != null ){
+           if (trackNameList.isEmpty()){
+               trackNameList.add(trackName)
+               Log.d("customMedia","添加單個曲目名稱")
+           }
+            if (trackImageList.isEmpty()){
+                trackImageList.add(trackImage)
+                Log.d("customMedia","添加單個曲目圖片")
+            }
+
+        }
 
         song_title.text = trackName
         image.load(trackImage) {
@@ -85,6 +103,12 @@ class MusicPlayActivity : AppCompatActivity() {
                     seekBar.progress = current
                     current_time.text = formatTime(current.toLong())
                 }
+                setOnTrackChangeListener { index, _ ->
+                    runOnUiThread {
+                        updateUI(index)
+                        Log.d("customMedia","已更新歌曲訊息")
+                    }
+                }
                 trackAudio?.let {
                     Log.d("customMedia", "設定音源$it")
                     setDataSource(it)
@@ -103,10 +127,7 @@ class MusicPlayActivity : AppCompatActivity() {
 
         play.setOnClickListener {
             media?.playPause()
-            // 添加短暂延迟来确保状态已更新
-            handler.postDelayed({
-                updatePlayPauseButton()
-            }, 100)
+            updatePlayPauseButton()
         }
 
         next.setOnClickListener {
@@ -139,6 +160,16 @@ class MusicPlayActivity : AppCompatActivity() {
             play.setImageResource(R.drawable.baseline_pause_circle_24)
         } else {
             play.setImageResource(R.drawable.baseline_play_circle_24)
+        }
+    }
+
+    private fun updateUI(index : Int){
+        if (index >= 0 && index < trackNameList.size){
+            song_title.text = trackNameList[index]
+            image.load(trackImageList[index]){
+                crossfade(true)
+            }
+            trackIndex = index
         }
     }
 

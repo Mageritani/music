@@ -40,14 +40,24 @@ class SearchActivity : AppCompatActivity() {
 
 
         searchBar.setOnEditorActionListener { _, actionId, event ->
-            if (actionId == EditorInfo.IME_ACTION_SEARCH || (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)) {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH || (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER &&
+                        event.action == KeyEvent.ACTION_DOWN)) {
                 val query = searchBar.text.toString().trim()
                 if (query.isNotEmpty()) {
                     searchMusic(query) { trackList ->
                         runOnUiThread {
                             adapter = SearchAdapter(trackList) { Track ->
+                                val songUrl = trackList.map { it.audio }
+                                val songNames = trackList.map{it.name}
+                                val songImages = trackList.map { it.image }
+
+                                val selectIndex = trackList.indexOf(Track)
+
                                 val intent = Intent(this, MusicPlayActivity::class.java).apply {
-                                    putStringArrayListExtra("TRACK_LIST",ArrayList())
+                                    putStringArrayListExtra("TRACK_LIST", ArrayList(songUrl))
+                                    putStringArrayListExtra("TRACK_NAMES", ArrayList(songNames))
+                                    putStringArrayListExtra("TRACK_IMAGES",ArrayList(songImages))
+                                    putExtra("TRACK_INDEX",selectIndex)
                                     putExtra("TRACK_NAME", Track.name)
                                     putExtra("TRACK_IMAGE", Track.image)
                                     putExtra("TRACK_AUDIO", Track.audio)

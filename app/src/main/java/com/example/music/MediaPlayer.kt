@@ -91,6 +91,7 @@ class CustomMediaPlayer(private val context: Context) {
                     true
                 }
                 prepareAsync()
+
             }
         } catch (e: IOException) {
             Log.e("CustomMusicPlayer", "設置音源時出錯", e)
@@ -188,6 +189,7 @@ class CustomMediaPlayer(private val context: Context) {
     }
 
     fun release() {
+        currentPosition = getCurrentPosition()
         handler.removeCallbacks(progressRunnable)
         isPrepared = false
         media?.release()

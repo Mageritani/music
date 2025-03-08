@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/white"
+    tools:context=".WeightActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="songname"
+        android:textSize="25sp"
+        android:layout_margin="10dp"
+        android:layout_gravity="center"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:padding="10dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout">
+
+        <ImageButton
+            android:id="@+id/previous"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:scaleType="fitCenter"
+            android:contentDescription="previous"
+            android:background="@android:color/transparent"
+            android:src="@drawable/baseline_skip_previous_24"/>
+
+        <ImageButton
+            android:id="@+id/play"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:contentDescription="play"
+            android:scaleType="fitCenter"
+            android:background="@android:color/transparent"
+
+            android:src="@drawable/baseline_play_circle_24"/>
+
+        <ImageButton
+            android:id="@+id/next"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:contentDescription="next"
+            android:scaleType="fitCenter"
+            android:background="@android:color/transparent"
+            android:src="@drawable/baseline_skip_next_24"/>
+    </LinearLayout>
+
+</LinearLayout>

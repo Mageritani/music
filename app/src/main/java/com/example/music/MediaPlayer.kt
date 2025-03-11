@@ -6,6 +6,7 @@ import android.media.MediaPlayer
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import java.io.File
 import java.io.IOException
 
 class CustomMediaPlayer(private val context: Context) {
@@ -14,6 +15,7 @@ class CustomMediaPlayer(private val context: Context) {
     private var currentPosition = 0
     private var currentIndex = 0
     private var songList = mutableListOf<String>()
+    private var localPathList = mutableListOf<String>()
 
     // 使用高阶函数简化回调
     private var onPreparedListener: (() -> Unit)? = null
@@ -43,7 +45,7 @@ class CustomMediaPlayer(private val context: Context) {
     fun setOnErrorListener(listener: (String) -> Unit) { onErrorListener = listener }
     fun setOnTrackChangeListener(listener: (Int, String) -> Unit) { onTrackChangeListener = listener }
 
-    fun setDataSource(audioUrl: String) {
+    fun setDataSource(audioUrl: String, localPath : String?) {
         release()
 
         try {
@@ -54,17 +56,26 @@ class CustomMediaPlayer(private val context: Context) {
                         .setUsage(AudioAttributes.USAGE_MEDIA)
                         .build()
                 )
-                setDataSource(audioUrl)
+
+                if (localPathList != null && File(localPath).exists()){
+                    Log.d("download","使用本地文件播放")
+                    setDataSource(localPath)
+                }else{
+                    Log.d("download","使用在線音樂播放")
+                    setDataSource(audioUrl)
+                }
 
                 setOnPreparedListener {
                     isPrepared = true
                     onPreparedListener?.invoke()
                     if (currentPosition > 0) seekTo(currentPosition)
+                    startProgressUpdates()
                 }
 
                 setOnCompletionListener {
                     onCompletionListener?.invoke()
                     handler.removeCallbacks(progressRunnable)
+                    next()
                 }
 
                 setOnErrorListener { _, what, extra ->
@@ -137,13 +148,15 @@ class CustomMediaPlayer(private val context: Context) {
     private fun playSongAtIndex(index: Int) {
         if (index < songList.size) {
             val song = songList[index]
-            setDataSource(song)
+            val localPath = if (index < localPathList.size) localPathList[index] else null
+            setDataSource(song, localPath)
             onTrackChangeListener?.invoke(index, song)
         }
     }
 
-    fun setPlayList(songs: List<String>, startIndex: Int = 0) {
+    fun setPlayList(songs: List<String>, startIndex: Int = 0,localPath: List<String>? = null) {
         songList = songs.toMutableList()
+        localPathList = localPath?.toMutableList() ?: MutableList(songs.size){""}
         currentIndex = startIndex.coerceIn(0, songs.size - 1)
         if (songList.isNotEmpty()) {
             playSongAtIndex(currentIndex)

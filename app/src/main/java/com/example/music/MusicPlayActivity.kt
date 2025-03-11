@@ -1,5 +1,6 @@
 package com.example.music
 
+import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -10,7 +11,9 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import coil.load
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 class MusicPlayActivity : AppCompatActivity() {
@@ -29,13 +32,18 @@ class MusicPlayActivity : AppCompatActivity() {
     private var trackIndex = 0
     private var trackNameList = arrayListOf<String>()
     private var trackImageList = arrayListOf<String>()
+    private var localPathList = arrayListOf<String>()
 
     private var media: CustomMediaPlayer? = null
+    private var downloadManger: DownloadManger? = null
+    private var currentTrack : Track? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_music_play)
+
+        downloadManger = DownloadManger(this)
         // 获取Intent传递的数据
         with(intent) {
             songList = getStringArrayListExtra("TRACK_LIST") ?: arrayListOf()
@@ -47,24 +55,33 @@ class MusicPlayActivity : AppCompatActivity() {
             val trackName = getStringExtra("TRACK_NAME")
             val trackImage = getStringExtra("TRACK_IMAGE")
             val trackAudio = getStringExtra("TRACK_AUDIO")
-
-            // 如果没有列表但有单曲信息，添加到列表
-            if (trackName != null && trackImage != null) {
-                if (trackNameList.isEmpty()) trackNameList.add(trackName)
-                if (trackImageList.isEmpty()) trackImageList.add(trackImage)
-            }
+        }
+        lifecycleScope.launch {
+            localPaths()
+            // 设置播放器
+            setupMusicPlayer(trackIndex)
 
             // 初始化UI
             updateUI(trackIndex)
-
-            // 设置播放器
-            setupMusicPlayer(songList, trackIndex, trackAudio)
         }
-
         setupClickListeners()
     }
 
-    private fun setupMusicPlayer(songList: ArrayList<String>, trackIndex: Int, trackAudio: String?) {
+    suspend fun localPaths() {
+        localPathList.clear()
+        val offlineTracks = downloadManger?.getAllOfflineTracks() ?: emptyList()
+
+        songList.forEach { url ->
+            val localPath = offlineTracks.find { it.audioUrl == url }
+            if (localPath != null && localPath.localPath.isNotEmpty()){
+                localPathList.add(localPath.localPath)
+            }else{
+                localPathList.add(url)
+            }
+        }
+    }
+
+    private fun setupMusicPlayer( trackIndex: Int) {
         try {
             media = CustomMediaPlayer(this).apply {
                 setOnPreparedListener {
@@ -95,13 +112,7 @@ class MusicPlayActivity : AppCompatActivity() {
                 }
 
                 // 设置播放列表
-                setPlayList(songList, trackIndex)
-
-                // 如果有单独传入的音频链接，使用它
-                trackAudio?.let {
-                    Log.d("customMedia", "设置音源$it")
-                    setDataSource(it)
-                }
+                setPlayList(localPathList, trackIndex)
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -116,9 +127,9 @@ class MusicPlayActivity : AppCompatActivity() {
             updatePlayPauseButton()
         }
 
-        next.setOnClickListener { media?.next() }
+        next.setOnClickListener { media?.next()}
 
-        previous.setOnClickListener { media?.previous() }
+        previous.setOnClickListener { media?.previous()}
 
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -147,6 +158,8 @@ class MusicPlayActivity : AppCompatActivity() {
             image.load(trackImageList[index]) {
                 crossfade(true)
             }
+            seekBar.progress = 0
+            currentTime.text = formatTime(0L)
             updatePlayPauseButton()
             trackIndex = index
         }

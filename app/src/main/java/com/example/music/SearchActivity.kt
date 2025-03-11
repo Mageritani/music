@@ -8,6 +8,7 @@ import android.widget.EditText
 import android.widget.ImageButton
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
@@ -30,15 +31,13 @@ class SearchActivity : AppCompatActivity() {
     }
 
     private fun setupSearchListener() {
-        searchBar.setOnEditorActionListener { _, actionId, event ->
-            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
-                (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)) {
-
+        searchBar.setOnKeyListener { _, keycode, event ->
+            if (keycode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN){
                 val query = searchBar.text.toString().trim()
                 if (query.isNotEmpty()) {
                     performSearch(query)
                 }
-                return@setOnEditorActionListener true
+                return@setOnKeyListener true
             }
             false
         }
@@ -47,7 +46,7 @@ class SearchActivity : AppCompatActivity() {
     private fun performSearch(query: String) {
         searchMusic(query) { trackList ->
             runOnUiThread {
-                val adapter = SearchAdapter(trackList) { selectedTrack ->
+                val adapter = SearchAdapter(this,trackList) { selectedTrack ->
                     launchMusicPlayer(trackList, selectedTrack)
                 }
                 itemRecycler.adapter = adapter
